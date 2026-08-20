@@ -26,11 +26,6 @@ class JwkToPem
 
     private static function base64UrlDecode(string $input): string
     {
-        $remainder = strlen($input) % 4;
-        if ($remainder) {
-            $input .= str_repeat('=', 4 - $remainder);
-        }
-
         return base64_decode(strtr($input, '-_', '+/'));
     }
 

@@ -99,7 +99,7 @@ class SocialAuthService
     {
         $decoded = $this->base64UrlDecode($b64);
 
-        return json_decode($decoded, true);
+        return json_decode($decoded, true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -208,11 +208,6 @@ class SocialAuthService
 
     private function base64UrlDecode(string $input): string
     {
-        $remainder = strlen($input) % 4;
-        if ($remainder) {
-            $input .= str_repeat('=', 4 - $remainder);
-        }
-
         return base64_decode(strtr($input, '-_', '+/'));
     }
 }
