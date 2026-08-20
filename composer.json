@@ -1,0 +1,28 @@
+{
+    "name": "foziluff/social-auth",
+    "description": "Secure Google and Apple JWT validation for Laravel",
+    "type": "library",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0",
+        "illuminate/http": "^11.0",
+        "guzzlehttp/guzzle": "^7.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Foziluff\\SocialAuth\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Foziluff\\SocialAuth\\SocialAuthServiceProvider"
+            ],
+            "aliases": {
+                "SocialAuth": "Foziluff\\SocialAuth\\Facades\\SocialAuth"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
