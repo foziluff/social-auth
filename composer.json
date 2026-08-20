@@ -2,6 +2,7 @@
     "name": "foziluff/social-auth",
     "description": "Secure Google and Apple JWT validation for Laravel",
     "type": "library",
+    "license": "MIT",
     "require": {
         "php": "^8.2",
         "illuminate/support": "^11.0",
