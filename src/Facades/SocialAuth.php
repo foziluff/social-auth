@@ -2,13 +2,14 @@
 
 namespace Foziluff\SocialAuth\Facades;
 
+use Foziluff\SocialAuth\Services\SocialAuthService;
 use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static array<string, mixed>|false verifyGoogle(string $token, ?string $clientId = null)
  * @method static array<string, mixed>|false verifyApple(string $token, ?string $clientId = null)
  *
- * @see \Foziluff\SocialAuth\Services\SocialAuthService
+ * @see SocialAuthService
  */
 class SocialAuth extends Facade
 {
