@@ -72,16 +72,14 @@ class SocialAuthService
                 return false;
             }
 
-            $jwk = $this->getMatchingJwk($certsUrl, $cacheKey, $header['kid']);
-            $pem = $jwk ? JwkToPem::convert($jwk) : null;
+            $pem = $this->getMatchingPem($certsUrl, $cacheKey, $header['kid']);
 
             if ($pem && $this->verifySignature($headerB64, $payloadB64, $signatureB64, $pem)) {
                 return $payload;
             }
 
             if (! $pem) {
-                $jwk = $this->getMatchingJwk($certsUrl, $cacheKey, $header['kid'], true);
-                $pem = $jwk ? JwkToPem::convert($jwk) : null;
+                $pem = $this->getMatchingPem($certsUrl, $cacheKey, $header['kid'], true);
 
                 if ($pem && $this->verifySignature($headerB64, $payloadB64, $signatureB64, $pem)) {
                     return $payload;
@@ -143,44 +141,33 @@ class SocialAuthService
         return true;
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function getMatchingJwk(string $certsUrl, string $cacheKey, string $kid, bool $forceRefresh = false): ?array
+    private function getMatchingPem(string $certsUrl, string $cacheKey, string $kid, bool $forceRefresh = false): ?string
     {
-        $jwks = Cache::get($cacheKey);
+        $pems = Cache::get($cacheKey);
 
-        if ($jwks === null || $forceRefresh) {
+        if ($pems === null || $forceRefresh) {
             $lockKey = $cacheKey.'_refresh_lock';
 
-            if ($jwks === null || Cache::add($lockKey, true, 60)) {
+            if ($pems === null || Cache::add($lockKey, true, 60)) {
                 try {
-                    $newJwks = $this->fetchJwks($certsUrl);
-                    Cache::put($cacheKey, $newJwks, self::CACHE_TTL);
-                    $jwks = $newJwks;
+                    $newPems = $this->fetchPems($certsUrl);
+                    Cache::put($cacheKey, $newPems, self::CACHE_TTL);
+                    $pems = $newPems;
                 } catch (Throwable $e) {
-                    if ($jwks === null) {
+                    if ($pems === null) {
                         return null;
                     }
                 }
             }
         }
 
-        if (is_array($jwks)) {
-            foreach ($jwks as $jwk) {
-                if (isset($jwk['kid']) && $jwk['kid'] === $kid) {
-                    return $jwk;
-                }
-            }
-        }
-
-        return null;
+        return is_array($pems) ? ($pems[$kid] ?? null) : null;
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<string, string>
      */
-    private function fetchJwks(string $certsUrl): array
+    private function fetchPems(string $certsUrl): array
     {
         $response = Http::timeout(5)->retry(3, 100)->get($certsUrl);
 
@@ -194,7 +181,21 @@ class SocialAuthService
             throw new \RuntimeException("Received empty JWKS from {$certsUrl}");
         }
 
-        return $keys;
+        $pems = [];
+        foreach ($keys as $key) {
+            if (isset($key['kid'])) {
+                $pem = JwkToPem::convert($key);
+                if ($pem) {
+                    $pems[$key['kid']] = $pem;
+                }
+            }
+        }
+
+        if (empty($pems)) {
+            throw new \RuntimeException("No valid keys could be converted to PEM from {$certsUrl}");
+        }
+
+        return $pems;
     }
 
     private function verifySignature(string $headerB64, string $payloadB64, string $signatureB64, string $pem): bool
